@@ -1,6 +1,6 @@
 CC = gcc
 SRC = writer.c
-OBJ = output.o
+OBJ = writer
 
 ifeq ($(CROSS_COMPILE),)
 	CC = gcc
