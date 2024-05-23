@@ -1,4 +1,6 @@
 name: assignment-test
+on:
+  workflow_dispatch:
 on: 
     push:
         tags-ignore:
