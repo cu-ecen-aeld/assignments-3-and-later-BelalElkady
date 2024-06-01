@@ -1,5 +1,9 @@
 #include "systemcalls.h"
-
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
 /**
  * @param cmd the command to execute with system()
  * @return true if the command in @param cmd was executed
@@ -16,6 +20,12 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
+int  status = system(cmd);
+if (status != 0){
+   
+    return false;
+    
+}
 
     return true;
 }
@@ -49,6 +59,7 @@ bool do_exec(int count, ...)
     // and may be removed
     command[count] = command[count];
 
+
 /*
  * TODO:
  *   Execute a system command by calling fork, execv(),
@@ -58,6 +69,48 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+
+pid_t pid = fork();
+
+if(pid < 0 ){
+    perror("fork failed");
+
+    return false ;
+}else if(pid == 0){
+   char* rem_args = command[1];
+    char* args[] = {rem_args , NULL};
+    printf("this is the child process pid is %d\n",getpid());
+    execv(command[0],args);
+
+    perror("execv failed");
+
+    return false;
+
+}else {
+
+    printf("Parent process , the child process pid is %d\n",pid);
+     int status ; 
+
+     pid_t waited_pid = wait(&status);
+
+     if(waited_pid == -1 ){
+        perror("waitpid failed");
+        return false;
+     }
+
+     if (WIFEXITED(status)){
+        int exit_status = WEXITSTATUS(status);
+        printf("Child process (PID: %d) exited with status %d\n", waited_pid, exit_status);
+
+     }
+     else {
+            printf("Child process (PID: %d) did not exit normally\n", waited_pid);
+        }
+
+
+}
+
+
 
     va_end(args);
 
@@ -93,6 +146,62 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *
 */
 
+
+pid_t pid = fork();
+
+int fd= open(outputfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+if(pid < 0 ){
+    perror("fork failed");
+
+    return false ;
+}else if(pid == 0){
+
+   if (fd < 0 ){
+        perror("open error");
+        return false;
+    }
+
+    if(dup2(fd,STDOUT_FILENO) < 0 ){
+        perror("dup2 error");
+        close (fd);
+         va_end(args);
+        return false;
+    }
+    //char* rem_args = command[1];
+   // char* args[] = {rem_args , NULL};
+    printf("this is the child process pid is %d\n",getpid());
+    execv(command[0],command);
+    perror("execv failed");
+
+    return false;
+
+}else {
+
+    printf("Parent process , the child process pid is %d\n",pid);
+     int status ; 
+
+     pid_t waited_pid = wait(&status);
+
+     if(waited_pid == -1 ){
+        perror("waitpid failed");
+            close (fd);
+    va_end(args);
+        return false;
+     }
+
+     if (WIFEXITED(status)){
+        int exit_status = WEXITSTATUS(status);
+        printf("Child process (PID: %d) exited with status %d\n", waited_pid, exit_status);
+
+     }
+     else {
+            printf("Child process (PID: %d) did not exit normally\n", waited_pid);
+        }
+
+
+}
+    close (fd);
     va_end(args);
 
     return true;
