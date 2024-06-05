@@ -77,10 +77,10 @@ if(pid < 0 ){
 
     return false ;
 }else if(pid == 0){
-   char* rem_args = command[1];
-    char* args[] = {rem_args , NULL};
+   //char* rem_args = command[1];
+   // char* args[] = {rem_args , NULL};
     printf("this is the child process pid is %d\n",getpid());
-    execv(command[0],args);
+    execv(command[0],command);
 
     perror("execv failed");
 
